@@ -17,10 +17,16 @@ namespace TfsBuildExtensions.Activities.Scripting
     {
         private readonly CodeActivityContext activityContext;
         private readonly WorkflowRawPsHostUi rawUI;
+        private readonly BuildMessageImportance messageImportance;
+        private readonly BuildMessageImportance warningImportance;
+        private readonly InvokePowerShellCommand activity;
 
-        public WorkflowPsHostUi(CodeActivityContext activityContext)
+        public WorkflowPsHostUi(CodeActivityContext activityContext, BuildMessageImportance messageImportance, BuildMessageImportance warningImportance, InvokePowerShellCommand activity)
         {
             this.activityContext = activityContext;
+            this.messageImportance = messageImportance;
+            this.warningImportance= warningImportance;
+            this.activity = activity;
             this.rawUI = new WorkflowRawPsHostUi();
         }
 
@@ -61,12 +67,12 @@ namespace TfsBuildExtensions.Activities.Scripting
 
         public override void Write(ConsoleColor foregroundColor, ConsoleColor backgroundColor, string value)
         {
-            this.activityContext.TrackBuildMessage(value, BuildMessageImportance.Normal);
+            this.activity.LogBuildMessage(value, this.messageImportance);
         }
 
         public override void Write(string value)
         {
-            this.activityContext.TrackBuildMessage(value, BuildMessageImportance.Normal);
+            this.activity.LogBuildMessage(value, this.messageImportance);
         }
 
         public override void WriteDebugLine(string message)
@@ -76,16 +82,40 @@ namespace TfsBuildExtensions.Activities.Scripting
 
         public override void WriteErrorLine(string value)
         {
-            this.activityContext.TrackBuildError(value);
+            this.activity.LogBuildError(value);
         }
+
+        /// <summary>
+        /// Writes a newline character (carriage return) 
+        /// to the output display of the host. 
+        /// </summary>
+        public override void WriteLine()
+        {
+            this.activity.LogBuildMessage("\n", this.messageImportance);
+        }
+
 
         public override void WriteLine(string value)
         {
             if (!string.IsNullOrEmpty(value))
             {
-                this.activityContext.TrackBuildMessage(value, BuildMessageImportance.Normal);
+                this.activity.LogBuildMessage(value, this.messageImportance);
             }
         }
+
+        /// <summary>
+        /// Writes a line of characters to the output display of the host 
+        /// with foreground and background colors and appends a newline (carriage return). 
+        /// </summary>
+        /// <param name="foregroundColor">The forground color of the display. </param>
+        /// <param name="backgroundColor">The background color of the display. </param>
+        /// <param name="value">The line to be written.</param>
+        public override void WriteLine(ConsoleColor foregroundColor, ConsoleColor backgroundColor, string value)
+        {
+            WriteLine(value);
+        }
+
+
 
         public override void WriteProgress(long sourceId, ProgressRecord record)
         {
@@ -104,7 +134,7 @@ namespace TfsBuildExtensions.Activities.Scripting
 
         public override void WriteWarningLine(string message)
         {
-            this.activityContext.TrackBuildWarning(message);
+            this.activity.LogBuildWarning(message);
         }
     }
 }

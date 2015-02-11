@@ -10,6 +10,7 @@ namespace TfsBuildExtensions.Activities.Scripting
     using System.Management.Automation.Host;
     using Microsoft.TeamFoundation.Build.Client;
     using Microsoft.TeamFoundation.Build.Workflow.Activities;
+    using System.Management.Automation;
 
     internal class WorkflowPsHost : PSHost
     {
@@ -17,11 +18,11 @@ namespace TfsBuildExtensions.Activities.Scripting
         private readonly WorkflowPsHostUi hostUI;
         private readonly Guid instanceId;
 
-        public WorkflowPsHost(CodeActivityContext activityContext)
+        public WorkflowPsHost(CodeActivityContext activityContext, BuildMessageImportance messageImportance, BuildMessageImportance warningImportance, InvokePowerShellCommand activity)
         {
             this.activityContext = activityContext;
             this.instanceId = Guid.NewGuid();
-            this.hostUI = new WorkflowPsHostUi(activityContext);
+            this.hostUI = new WorkflowPsHostUi(activityContext,messageImportance,warningImportance,activity);
         }
 
         public override System.Globalization.CultureInfo CurrentCulture
