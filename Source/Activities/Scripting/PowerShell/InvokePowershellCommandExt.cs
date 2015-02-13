@@ -16,10 +16,10 @@ namespace TfsBuildExtensions.Activities.Scripting
     using Microsoft.TeamFoundation.VersionControl.Client;
 
     /// <summary>
-    /// A command to invoke powershell scripts on a build agent
+    /// A command to invoke powershell scripts on a build agent with extended properties
     /// </summary>
     [BuildActivity(HostEnvironmentOption.Agent)]
-    public sealed class InvokePowerShellCommand : BaseCodeActivity<PSObject[]>
+    public sealed class InvokePowerShellCommandExt : BaseCodeActivity<PSObject[]>
     {
         /// <summary>
         /// Interface is used to allow use to mock out calls to the TFS server for testing
@@ -27,18 +27,23 @@ namespace TfsBuildExtensions.Activities.Scripting
         private readonly IUtilitiesForPowerShellActivity powershellUtilities;
 
         /// <summary>
+        /// Flag if error existed during execution
+        /// </summary>
+        private bool wasError = false;
+
+        /// <summary>
         /// Initializes a new instance of the InvokePowerShellCommand class
         /// </summary>
-        public InvokePowerShellCommand()
+        public InvokePowerShellCommandExt()
             : this(new UtilitiesForPowerShellActivity())
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the InvokePowerShellCommand class
+        /// Initializes a new instance of the InvokePowerShellCommandExt class
         /// </summary>
         /// <param name="powershellUtilities">Allows a mock implementation of utilities to be passed in for testing</param>
-        internal InvokePowerShellCommand(IUtilitiesForPowerShellActivity powershellUtilities)
+        internal InvokePowerShellCommandExt(IUtilitiesForPowerShellActivity powershellUtilities)
         {
             this.powershellUtilities = powershellUtilities;
         }
@@ -71,25 +76,37 @@ namespace TfsBuildExtensions.Activities.Scripting
         /// Gets or sets the Importance of Message.
         /// </summary>
         /// <value>Build message importance</value>
-        [RequiredArgument]
         [Browsable(true)]
+        [DefaultValue(BuildMessageImportance.High)]
+        [Description("Set importnace for Messages")]
         public InArgument<BuildMessageImportance> MessageImportance { get; set; }
 
         /// <summary>
         /// Gets or sets the Importance of Warning.
         /// </summary>
         /// <value>The build message importance</value>
-        [RequiredArgument]
         [Browsable(true)]
+        [DefaultValue(BuildMessageImportance.High)]
+        [Description("Set importance for Warnings")]
         public InArgument<BuildMessageImportance> WarningImportance { get; set; }
 
         /// <summary>
         /// Gets or sets if the error should be reported as test error.
         /// </summary>
         /// <value>The test</value>
-        [RequiredArgument]
         [Browsable(true)]
+        [DefaultValue(false)]
+        [Description("Set to true if part of testing")]
         public InArgument<bool> IsTest { get; set; }
+
+        /// <summary>
+        /// Fail build on first Error (FailBuildOnError must be true)
+        /// </summary>
+        /// <value>Set true to Fail build on first error</value>
+        [Browsable(true)]
+        [DefaultValue(false)]
+        [Description("Set to true to fail the build on first error")]
+        public InArgument<bool> FailBuildOnFirstError { get; set; }
 
         /// <summary>
         /// Resolves the provided script parameter to either a server stored 
@@ -143,9 +160,22 @@ namespace TfsBuildExtensions.Activities.Scripting
                 {
                     buildDetail.CompilationStatus = BuildPhaseStatus.Failed;
                 }
+                //buildDetail.Status = BuildStatus.Failed;
                 buildDetail.Save();
+                if (this.FailBuildOnFirstError.Get(this.ActivityContext))
+                {
+                    throw new FailingBuildException(errorMessage);
+                }
             }
-            base.LogBuildError(errorMessage);
+            if (this.IgnoreExceptions.Get(this.ActivityContext))
+            {
+                this.ActivityContext.TrackBuildWarning(errorMessage);
+            }
+            else
+            {
+                this.ActivityContext.TrackBuildError(errorMessage);
+            }
+            this.wasError = true;
         }
 
         /// <summary>
@@ -191,7 +221,7 @@ namespace TfsBuildExtensions.Activities.Scripting
 
             context.TrackBuildMessage(string.Format(CultureInfo.CurrentCulture, "Script resolved to {0}", script), BuildMessageImportance.Low);
 
-            using (var runspace = RunspaceFactory.CreateRunspace(new WorkflowPsHost(context, MessageImportance.Get(context), WarningImportance.Get(context), this)))
+            using (var runspace = RunspaceFactory.CreateRunspace(new WorkflowPsHostExt(context, MessageImportance.Get(context), WarningImportance.Get(context), this)))
             {
                 runspace.Open();
 
@@ -200,6 +230,10 @@ namespace TfsBuildExtensions.Activities.Scripting
                     pipeline.Commands.Add("out-default");
                     pipeline.Commands[0].MergeMyResults(PipelineResultTypes.Error, PipelineResultTypes.Output);
                     var output = pipeline.Invoke();
+                    if (this.FailBuildOnError.Get(this.ActivityContext) && this.FailBuildOnFirstError.Get(this.ActivityContext) && this.wasError)
+                    {
+                        throw new FailingBuildException("There were errors. Failing the build...");
+                    }
                     return output.ToArray();
                 }
             }

@@ -13,15 +13,15 @@ namespace TfsBuildExtensions.Activities.Scripting
     using Microsoft.TeamFoundation.Build.Client;
     using Microsoft.TeamFoundation.Build.Workflow.Activities;
 
-    internal class WorkflowPsHostUi : PSHostUserInterface
+    internal class WorkflowPsHostUiExt : PSHostUserInterface
     {
         private readonly CodeActivityContext activityContext;
         private readonly WorkflowRawPsHostUi rawUI;
         private readonly BuildMessageImportance messageImportance;
         private readonly BuildMessageImportance warningImportance;
-        private readonly InvokePowerShellCommand activity;
+        private readonly InvokePowerShellCommandExt activity;
 
-        public WorkflowPsHostUi(CodeActivityContext activityContext, BuildMessageImportance messageImportance, BuildMessageImportance warningImportance, InvokePowerShellCommand activity)
+        public WorkflowPsHostUiExt(CodeActivityContext activityContext, BuildMessageImportance messageImportance, BuildMessageImportance warningImportance, InvokePowerShellCommandExt activity)
         {
             this.activityContext = activityContext;
             this.messageImportance = messageImportance;

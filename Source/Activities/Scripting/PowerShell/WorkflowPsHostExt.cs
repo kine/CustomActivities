@@ -12,17 +12,17 @@ namespace TfsBuildExtensions.Activities.Scripting
     using Microsoft.TeamFoundation.Build.Workflow.Activities;
     using System.Management.Automation;
 
-    internal class WorkflowPsHost : PSHost
+    internal class WorkflowPsHostExt : PSHost
     {
         private readonly CodeActivityContext activityContext;
-        private readonly WorkflowPsHostUi hostUI;
+        private readonly WorkflowPsHostUiExt hostUI;
         private readonly Guid instanceId;
 
-        public WorkflowPsHost(CodeActivityContext activityContext, BuildMessageImportance messageImportance, BuildMessageImportance warningImportance, InvokePowerShellCommand activity)
+        public WorkflowPsHostExt(CodeActivityContext activityContext, BuildMessageImportance messageImportance, BuildMessageImportance warningImportance, InvokePowerShellCommandExt activity)
         {
             this.activityContext = activityContext;
             this.instanceId = Guid.NewGuid();
-            this.hostUI = new WorkflowPsHostUi(activityContext,messageImportance,warningImportance,activity);
+            this.hostUI = new WorkflowPsHostUiExt(activityContext,messageImportance,warningImportance,activity);
         }
 
         public override System.Globalization.CultureInfo CurrentCulture

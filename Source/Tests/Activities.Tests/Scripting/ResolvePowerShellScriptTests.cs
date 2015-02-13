@@ -19,7 +19,7 @@ namespace TfsBuildExtensions.Activities.Tests.Scripting
             fakeTfsProvider.Setup(f => f.GetLocalFilePathFromWorkspace(null, It.IsAny<string>())).Returns(@"c:\serverfile\script.ps1");
             fakeTfsProvider.Setup(f => f.FileExists(It.IsAny<string>())).Returns(true);
 
-            var activity = new InvokePowerShellCommand(fakeTfsProvider.Object);
+            var activity = new InvokePowerShellCommandExt(fakeTfsProvider.Object);
 
             // Act
             var actual = activity.ResolveScript(null, "$/Test Path/Not A Real Path", "-myarg");
@@ -38,7 +38,7 @@ namespace TfsBuildExtensions.Activities.Tests.Scripting
             fakeTfsProvider.Setup(f => f.GetLocalFilePathFromWorkspace(null, It.IsAny<string>())).Returns(@"c:\serverfile\script.ps1");
             fakeTfsProvider.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
 
-            var activity = new InvokePowerShellCommand(fakeTfsProvider.Object);
+            var activity = new InvokePowerShellCommandExt(fakeTfsProvider.Object);
 
             // Act
             var actual = activity.ResolveScript(null, "$/Test Path/Not A Real Path", "-myarg");
@@ -55,7 +55,7 @@ namespace TfsBuildExtensions.Activities.Tests.Scripting
             fakeTfsProvider.Setup(f => f.IsServerItem(It.IsAny<string>())).Returns(false);
             fakeTfsProvider.Setup(f => f.FileExists(It.IsAny<string>())).Returns(true);
 
-            var activity = new InvokePowerShellCommand(fakeTfsProvider.Object);
+            var activity = new InvokePowerShellCommandExt(fakeTfsProvider.Object);
 
             // Act
             var actual = activity.ResolveScript(null, @"c:\localscript.ps1", "-myarg");
@@ -72,7 +72,7 @@ namespace TfsBuildExtensions.Activities.Tests.Scripting
             fakeTfsProvider.Setup(f => f.IsServerItem(It.IsAny<string>())).Returns(false);
             fakeTfsProvider.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
 
-            var activity = new InvokePowerShellCommand(fakeTfsProvider.Object);
+            var activity = new InvokePowerShellCommandExt(fakeTfsProvider.Object);
 
             // Act
             var actual = activity.ResolveScript(null, @"some powershell commands", "-myarg");

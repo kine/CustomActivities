@@ -15,7 +15,7 @@ namespace TfsBuildExtensions.Activities.Tests
         [TestMethod]
         public void PowershellActivity_ReturnsMembers_WhenGetMemberIsInvoked()
         {
-            var activity = new InvokePowerShellCommand { Script = "Get-Help Get-Item" };
+            var activity = new InvokePowerShellCommandExt { Script = "Get-Help Get-Item" };
             var outputs = WorkflowInvoker.Invoke(activity);
             Assert.IsNotNull(outputs);
         }
@@ -24,7 +24,7 @@ namespace TfsBuildExtensions.Activities.Tests
         [ExpectedException(typeof(CommandNotFoundException), AllowDerivedTypes = true)]
         public void PowershellActivity_ThrowsCommandNotFoundException_OnUnhandledRuntimeException()
         {
-            var activity = new InvokePowerShellCommand { Script = "Get-Helps Get-Item" };
+            var activity = new InvokePowerShellCommandExt { Script = "Get-Helps Get-Item" };
             WorkflowInvoker.Invoke(activity);            
         }
 
@@ -32,7 +32,7 @@ namespace TfsBuildExtensions.Activities.Tests
         [ExpectedException(typeof(ArgumentNullException))]
         public void PowershellActivity_ThrowsArgumentNullException_OnEmptyCommand()
         {
-            var activity = new InvokePowerShellCommand { Script = string.Empty };
+            var activity = new InvokePowerShellCommandExt { Script = string.Empty };
             WorkflowInvoker.Invoke(activity);
         }
 
@@ -40,7 +40,7 @@ namespace TfsBuildExtensions.Activities.Tests
         [ExpectedException(typeof(ArgumentNullException))]
         public void PowershellActivity_ThrowsArgumentNullException_OnWhitespaceCommand()
         {
-            var activity = new InvokePowerShellCommand { Script = "   " };
+            var activity = new InvokePowerShellCommandExt { Script = "   " };
             WorkflowInvoker.Invoke(activity);
         }
 
@@ -49,7 +49,7 @@ namespace TfsBuildExtensions.Activities.Tests
         public void PowershellActivity_ThrowsArgumentNullException_WhenServerCommandAndNoWorkspaceProvided()
         {
             // Arrange
-            var activity = new InvokePowerShellCommand { Script = "$/Test Path/Not A Real Path" };
+            var activity = new InvokePowerShellCommandExt { Script = "$/Test Path/Not A Real Path" };
             
             // Act
             WorkflowInvoker.Invoke(activity);
