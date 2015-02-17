@@ -124,6 +124,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="Framework\ReadAssemblyInfoTests.cs" />
+    <Compile Include="Scripting\InvokePowerShellCommandTestsExt.cs" />
+    <Compile Include="Scripting\ResolvePowerShellScriptTestsExt.cs" />
     <Compile Include="SharePoint\GenerateSharePointAppPowerShellScriptsTests.cs" />
     <Compile Include="SqlServer\DacVersionTests.cs" />
     <Compile Include="TeamFoundationServer\ConvertToPropertiesTests.cs" />
