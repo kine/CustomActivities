@@ -217,9 +217,9 @@ namespace TfsBuildExtensions.Activities.Scripting
               this.Arguments.Get(context));
 
             var buildDetail = context.GetExtension<IBuildDetail>();
-            //buildDetail.TestStatus
 
             context.TrackBuildMessage(string.Format(CultureInfo.CurrentCulture, "Script resolved to {0}", script), BuildMessageImportance.Low);
+            this.SetEnvironmentVariables(buildDetail);
 
             using (var runspace = RunspaceFactory.CreateRunspace(new WorkflowPsHostExt(context, MessageImportance.Get(context), WarningImportance.Get(context), this)))
             {
@@ -237,6 +237,22 @@ namespace TfsBuildExtensions.Activities.Scripting
                     return output.ToArray();
                 }
             }
+        }
+
+        private void SetEnvironmentVariables(IBuildDetail buildDetail)
+        {
+            Environment.SetEnvironmentVariable("TF_BUILD_BUILDDEFINITIONNAME", buildDetail.BuildDefinition.Name);
+            Environment.SetEnvironmentVariable("TF_BUILD", "True");
+            Environment.SetEnvironmentVariable("TF_BUILD_BUILDNUMBER", buildDetail.BuildNumber);
+            Environment.SetEnvironmentVariable("TF_BUILD_BUILDREASON", buildDetail.Reason.ToString());
+            Environment.SetEnvironmentVariable("TF_BUILD_BUILDURI", buildDetail.Uri.ToString());
+            Environment.SetEnvironmentVariable("TF_BUILD_DROPLOCATION", buildDetail.DropLocation);
+            Environment.SetEnvironmentVariable("TF_BUILD_SOURCEGETVERSION", buildDetail.SourceGetVersion);
+            //Environment.SetEnvironmentVariable("TF_BUILD_COLLECTIONURI", buildDetail.);
+            //Environment.SetEnvironmentVariable("TF_BUILD_BINARIESDIRECTORY", buildDetail.);
+            //Environment.SetEnvironmentVariable("TF_BUILD_BUILDDIRECTORY", buildDetail.);
+            //Environment.SetEnvironmentVariable("TF_BUILD_SOURCESDIRECTORY ", buildDetail.);
+            //Environment.SetEnvironmentVariable("TF_BUILD_TESTRESULTSDIRECTORY", buildDetail.);
         }
     }
 }
