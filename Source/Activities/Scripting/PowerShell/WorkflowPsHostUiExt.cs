@@ -134,7 +134,7 @@ namespace TfsBuildExtensions.Activities.Scripting
 
         public override void WriteWarningLine(string message)
         {
-            this.activity.LogBuildWarning(message);
+            //this.activity.LogBuildWarning(message);
         }
     }
 }

@@ -14,6 +14,7 @@ namespace TfsBuildExtensions.Activities.Scripting
     using Microsoft.TeamFoundation.Build.Client;
     using Microsoft.TeamFoundation.Build.Workflow.Activities;
     using Microsoft.TeamFoundation.VersionControl.Client;
+    using System.Threading;
 
     /// <summary>
     /// A command to invoke powershell scripts on a build agent with extended properties
@@ -224,21 +225,85 @@ namespace TfsBuildExtensions.Activities.Scripting
             using (var runspace = RunspaceFactory.CreateRunspace(new WorkflowPsHostExt(context, MessageImportance.Get(context), WarningImportance.Get(context), this)))
             {
                 runspace.Open();
-
-                using (var pipeline = runspace.CreatePipeline(script))
+                using (var ps = PowerShell.Create())
                 {
-                    pipeline.Commands.Add("out-default");
-                    pipeline.Commands[0].MergeMyResults(PipelineResultTypes.Error, PipelineResultTypes.Output);
-                    var output = pipeline.Invoke();
-                    if (this.FailBuildOnError.Get(this.ActivityContext) && this.FailBuildOnFirstError.Get(this.ActivityContext) && this.wasError)
+                    ps.Runspace = runspace;
+                    ps.AddScript(script);
+
+                    ps.Streams.Error.DataAdded += Error_DataAdded;
+                    ps.Streams.Warning.DataAdded += Warning_DataAdded;
+                    var psAsyncResult = ps.BeginInvoke();
+                    while (!psAsyncResult.IsCompleted)
+                    {
+                        Thread.Sleep(100);
+                    }
+                    var psresult = ps.EndInvoke(psAsyncResult);
+                    
+                    if (this.FailBuildOnError.Get(this.ActivityContext) && this.FailBuildOnFirstError.Get(this.ActivityContext) && (ps.Streams.Error.Count>0))
                     {
                         throw new FailingBuildException("There were errors. Failing the build...");
                     }
-                    return output.ToArray();
+
+                    //var psresult = ps.Invoke();
+                    //foreach (var warning in ps.Streams.Warning)
+                    //{
+                    //    this.LogBuildWarning(warning.Message);
+                    //}
+                    //foreach (var error in ps.Streams.Error)
+                    //{
+                    //    this.LogBuildError(error.Exception.Message);
+                    //}
+                    return psresult.ToArray();
+
                 }
             }
+            //using (var runspace = RunspaceFactory.CreateRunspace(new WorkflowPsHostExt(context, MessageImportance.Get(context), WarningImportance.Get(context), this)))
+            //{
+            //    runspace.Open();
+            //    ManualResetEvent wait = new ManualResetEvent(false);
+
+            //    using (var pipeline = runspace.CreatePipeline(script))
+            //    {
+            //        //pipeline.Commands.Add("out-default");
+            //        //pipeline.Commands[0].MergeMyResults(PipelineResultTypes.Error, PipelineResultTypes.Output);
+            //        /*
+            //        var output = pipeline.Invoke();
+            //        if (this.FailBuildOnError.Get(this.ActivityContext) && this.FailBuildOnFirstError.Get(this.ActivityContext) && this.wasError)
+            //        {
+            //            throw new FailingBuildException("There were errors. Failing the build...");
+            //        }
+            //        return output.ToArray();
+            //         * */
+            //        pipeline.Output.DataReady += Output_DataReady;
+            //        pipeline.Error.DataReady += Error_DataReady;
+            //        pipeline.StateChanged += (s, e) =>
+            //            {
+            //                var state = e.PipelineStateInfo.State;
+            //                if (state == PipelineState.Completed ||
+            //                    state == PipelineState.Failed)
+            //                {
+            //                    wait.Set();
+            //                }
+            //            };
+            //        pipeline.InvokeAsync();
+
+            //        wait.WaitOne();
+                    
+            //    }
+            //}
         }
 
+        void Warning_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            var warnings = (PSDataCollection<WarningRecord>)sender;
+            this.LogBuildWarning(warnings[e.Index].Message);
+        }
+
+        void Error_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            var errors = (PSDataCollection<ErrorRecord>)sender;
+            this.LogBuildError(errors[e.Index].Exception.Message);
+        }
         private void SetEnvironmentVariables(IBuildDetail buildDetail)
         {
             Environment.SetEnvironmentVariable("TF_BUILD_BUILDDEFINITIONNAME", buildDetail.BuildDefinition.Name);
