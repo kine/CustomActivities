@@ -185,7 +185,14 @@ namespace TfsBuildExtensions.Activities.Scripting
         /// <param name="warningMessage">Message to save</param>
         new public void LogBuildWarning(string warningMessage)
         {
-            base.LogBuildWarning(warningMessage);
+            if (this.TreatWarningsAsErrors.Get(this.ActivityContext))
+            {
+                this.LogBuildError(warningMessage);
+            }
+            else
+            {
+                this.ActivityContext.TrackBuildWarning(warningMessage,this.WarningImportance.Get(this.ActivityContext));
+            }
         }
 
         /// <summary>
