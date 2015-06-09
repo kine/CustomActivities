@@ -259,6 +259,7 @@
     </Compile>
     <Compile Include="TeamFoundationServer\GetChangeset.cs" />
     <Compile Include="TeamFoundationServer\GetChangesetItems.cs" />
+    <Compile Include="TeamFoundationServer\GetGitBranchName.cs" />
     <Compile Include="TeamFoundationServer\GetLastGoodBuild.cs" />
     <Compile Include="TeamFoundationServer\GetLatestBuildDetail.cs" />
     <Compile Include="TeamFoundationServer\GetLatestChangeset.cs" />

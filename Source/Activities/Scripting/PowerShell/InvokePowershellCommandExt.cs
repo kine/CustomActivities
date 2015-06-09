@@ -15,6 +15,7 @@ namespace TfsBuildExtensions.Activities.Scripting
     using Microsoft.TeamFoundation.Build.Workflow.Activities;
     using Microsoft.TeamFoundation.VersionControl.Client;
     using System.Threading;
+    using Microsoft.TeamFoundation.Build.Common;
 
     /// <summary>
     /// A command to invoke powershell scripts on a build agent with extended properties
@@ -26,11 +27,6 @@ namespace TfsBuildExtensions.Activities.Scripting
         /// Interface is used to allow use to mock out calls to the TFS server for testing
         /// </summary>
         private readonly IUtilitiesForPowerShellActivity powershellUtilities;
-
-        /// <summary>
-        /// Flag if error existed during execution
-        /// </summary>
-        private bool wasError = false;
 
         /// <summary>
         /// Initializes a new instance of the InvokePowerShellCommand class
@@ -176,7 +172,6 @@ namespace TfsBuildExtensions.Activities.Scripting
             {
                 this.ActivityContext.TrackBuildError(errorMessage);
             }
-            this.wasError = true;
         }
 
         /// <summary>
@@ -311,6 +306,25 @@ namespace TfsBuildExtensions.Activities.Scripting
             var errors = (PSDataCollection<ErrorRecord>)sender;
             this.LogBuildError(errors[e.Index].Exception.Message);
         }
+
+        string GetGitBranch(IBuildDetail buildDetail)
+        {
+            string branch = null;
+            string commit;
+
+            var environmentVariable = buildDetail;
+            if (environmentVariable != null && !BuildSourceVersion.TryParseGit(environmentVariable.SourceGetVersion, out branch, out commit))
+            {
+                var defaultSourceProvider = environmentVariable.BuildDefinition.GetDefaultSourceProvider();
+                if (BuildSourceProviders.IsGit(defaultSourceProvider.Name))
+                    branch = BuildSourceProviders.GetProperty(defaultSourceProvider.Fields, BuildSourceProviders.GitProperties.DefaultBranch);
+            }
+
+            if (string.IsNullOrEmpty(branch))
+                throw new Exception("Could not find Branch");
+
+            return (branch.Substring(branch.LastIndexOf("/", StringComparison.InvariantCultureIgnoreCase) + 1));
+        }
         private void SetEnvironmentVariables(IBuildDetail buildDetail)
         {
             Environment.SetEnvironmentVariable("TF_BUILD_BUILDDEFINITIONNAME", buildDetail.BuildDefinition.Name);
@@ -320,6 +334,7 @@ namespace TfsBuildExtensions.Activities.Scripting
             Environment.SetEnvironmentVariable("TF_BUILD_BUILDURI", buildDetail.Uri.ToString());
             Environment.SetEnvironmentVariable("TF_BUILD_DROPLOCATION", buildDetail.DropLocation);
             Environment.SetEnvironmentVariable("TF_BUILD_SOURCEGETVERSION", buildDetail.SourceGetVersion);
+            Environment.SetEnvironmentVariable("TF_BUILD_GITBRANCH", GetGitBranch(buildDetail));
             //Environment.SetEnvironmentVariable("TF_BUILD_COLLECTIONURI", buildDetail.);
             //Environment.SetEnvironmentVariable("TF_BUILD_BINARIESDIRECTORY", buildDetail.);
             //Environment.SetEnvironmentVariable("TF_BUILD_BUILDDIRECTORY", buildDetail.);
