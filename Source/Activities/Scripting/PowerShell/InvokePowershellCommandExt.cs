@@ -335,6 +335,7 @@ namespace TfsBuildExtensions.Activities.Scripting
             Environment.SetEnvironmentVariable("TF_BUILD_DROPLOCATION", buildDetail.DropLocation);
             Environment.SetEnvironmentVariable("TF_BUILD_SOURCEGETVERSION", buildDetail.SourceGetVersion);
             Environment.SetEnvironmentVariable("TF_BUILD_GITBRANCH", GetGitBranch(buildDetail));
+            Environment.SetEnvironmentVariable("TF_BUILD_PROJECT", buildDetail.TeamProject);
             //Environment.SetEnvironmentVariable("TF_BUILD_COLLECTIONURI", buildDetail.);
             //Environment.SetEnvironmentVariable("TF_BUILD_BINARIESDIRECTORY", buildDetail.);
             //Environment.SetEnvironmentVariable("TF_BUILD_BUILDDIRECTORY", buildDetail.);
